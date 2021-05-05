@@ -1,0 +1,7 @@
+c-files/
+code
+*.bc
+*.ll
+*.s
+P2.2.iml
+.idea/
