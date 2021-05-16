@@ -1,4 +1,4 @@
-// Generated from /Users/monika/MRG-SEM1/JFiK/P2.2/Grammar.g4 by ANTLR 4.9.1
+// Generated from /Users/monika/MGR-SEM1/JFiK/project-repo/Grammar.g4 by ANTLR 4.9.1
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**
@@ -15,6 +15,12 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitProgram(GrammarParser.ProgramContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#block}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlock(GrammarParser.BlockContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code print}
 	 * labeled alternative in {@link GrammarParser#stat}.
@@ -36,6 +42,13 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPrintString(GrammarParser.PrintStringContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code repeat}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRepeat(GrammarParser.RepeatContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code statId}
 	 * labeled alternative in {@link GrammarParser#stat}.
@@ -167,4 +180,10 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitArrayType(GrammarParser.ArrayTypeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#repetitions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitRepetitions(GrammarParser.RepetitionsContext ctx);
 }

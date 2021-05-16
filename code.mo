@@ -25,9 +25,13 @@ print "Ostatni element tablicy int"
 print elem
 
 float[] ar = [6.0 3.2 1.0]
-float e = ar[0]
-print "Pierwszy element tablicy float"
+float e = ar[1]
+print "Drugi element tablicy float"
 print e
 
 int suma = arr[1] + (int)ar[0]
 print suma
+
+repeat 5 {
+    print a
+}

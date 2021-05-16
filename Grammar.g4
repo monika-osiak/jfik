@@ -1,10 +1,13 @@
 grammar Grammar;
 
-program: ( stat? NEWLINE )*;
+program: block;
+
+block: ( stat? NEWLINE )*;
 
 stat: PRINT ID                              #print
     | READ ID                               #read
     | PRINT STRING                          #printString
+    | REPEAT repetitions '{' block '}'      #repeat
     | id                                    #statId
     | id EQ val                             #assign
     | id EQ expr                            #assign
@@ -33,6 +36,11 @@ type: 'int'
 
 arrayType: 'int[]'
     | 'float[]';
+
+repetitions: INT
+    | ID;
+
+REPEAT: 'repeat';
 
 PRINT: 'print';
 

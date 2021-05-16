@@ -1,11 +1,15 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 public class LLVMGenerator {
     static String header_text = "";
     static String main_text = "";
     static int reg = 1;
+    static int br = 0;
+
+    static Stack<Integer> brstack = new Stack<Integer>();
 
     static void scanf_i32(String id) { // scanf int
         main_text += "%" + reg + " = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strsi, i64 0, i64 0), i32* %" + id + ")\n";
@@ -29,7 +33,6 @@ public class LLVMGenerator {
     static void printf_double(String id) {
         main_text += "%" + reg + " = load double, double* %" + id + "\n";
         reg++;
-        // tu było zmieniane na 5 x18 TODO nie działa czasami wypisywanie tablicy double
         main_text += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @strpd, i64 0, i64 0), double %" + (reg - 1) + ")\n";
         reg++;
     }
@@ -166,6 +169,33 @@ public class LLVMGenerator {
     static void fptosi(String id) {
         main_text += "%" + reg + " = fptosi double " + id + " to i32\n";
         reg++;
+    }
+
+    static void repeatStart(String repetitions){
+        declare_i32(Integer.toString(reg));
+        int counter = reg;
+        reg++;
+        assign_i32(Integer.toString(counter), "0");
+        br++;
+        main_text += "br label %cond"+br+"\n";
+        main_text += "cond"+br+":\n";
+
+        load_i32(Integer.toString(counter));
+        add_i32("%"+(reg-1), "1");
+        assign_i32(Integer.toString(counter), "%"+(reg-1));
+
+        main_text += "%"+reg+" = icmp slt i32 %"+(reg-2)+", "+repetitions+"\n";
+        reg++;
+
+        main_text += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
+        main_text += "true"+br+":\n";
+        brstack.push(br);
+    }
+
+    static void repeatEnd(){
+        int b = brstack.pop();
+        main_text += "br label %cond"+b+"\n";
+        main_text += "false"+b+":\n";
     }
 
     static String getConsts(HashMap<String, Array> consts) {

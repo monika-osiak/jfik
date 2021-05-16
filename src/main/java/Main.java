@@ -29,9 +29,7 @@ public class Main {
         writer.close();
     }
 
-    // TODO: obsługa string
-    // TODO: obsługa array
-    // TODO: działania na zmiennych
+
     public static void main(String[] args) throws Exception {
         String filename = args.length > 0 ? args[0] : "code.mo";
         String code = getCode(filename);
