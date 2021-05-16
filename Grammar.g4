@@ -14,7 +14,8 @@ stat: PRINT ID                              #print
     | id EQ val                             #assign
     | id EQ expr                            #assign
     | 'string' ID EQ STRING                 #newString
-    | arrayType ID EQ '[' (number)* ']'     #newArray;
+    | arrayType ID EQ '[' (number)* ']'     #newArray
+    | ID                                    #call;
 
 function: FUNCTION name '{' fblock '}';
 
