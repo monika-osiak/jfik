@@ -11,6 +11,26 @@ public class LLVMGenerator {
 
     static Stack<Integer> brstack = new Stack<Integer>();
 
+    static void icmp(String id, String value){
+        main_text += "%"+reg+" = load i32, i32* %"+id+"\n";
+        reg++;
+        main_text += "%"+reg+" = icmp eq i32 %"+(reg-1)+", "+value+"\n";
+        reg++;
+    }
+
+    static void ifstart(){
+        br++;
+        main_text += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
+        main_text += "true"+br+":\n";
+        brstack.push(br);
+    }
+
+    static void ifend(){
+        int b = brstack.pop();
+        main_text += "br label %false"+b+"\n";
+        main_text += "false"+b+":\n";
+    }
+
     static void scanf_i32(String id) { // scanf int
         main_text += "%" + reg + " = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strsi, i64 0, i64 0), i32* %" + id + ")\n";
         // %2 = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0), i32* %1)

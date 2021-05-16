@@ -75,6 +75,18 @@ public interface GrammarListener extends ParseTreeListener {
 	 */
 	void exitRepeat(GrammarParser.RepeatContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code if}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void enterIf(GrammarParser.IfContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code if}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void exitIf(GrammarParser.IfContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code statId}
 	 * labeled alternative in {@link GrammarParser#stat}.
 	 * @param ctx the parse tree
@@ -308,4 +320,24 @@ public interface GrammarListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitRepetitions(GrammarParser.RepetitionsContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link GrammarParser#blockif}.
+	 * @param ctx the parse tree
+	 */
+	void enterBlockif(GrammarParser.BlockifContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GrammarParser#blockif}.
+	 * @param ctx the parse tree
+	 */
+	void exitBlockif(GrammarParser.BlockifContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link GrammarParser#equal}.
+	 * @param ctx the parse tree
+	 */
+	void enterEqual(GrammarParser.EqualContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GrammarParser#equal}.
+	 * @param ctx the parse tree
+	 */
+	void exitEqual(GrammarParser.EqualContext ctx);
 }

@@ -8,6 +8,8 @@ stat: PRINT ID                              #print
     | READ ID                               #read
     | PRINT STRING                          #printString
     | REPEAT repetitions '{' block '}'      #repeat
+    | IF equal '{' blockif  '}'             #if
+    // TODO: dodać if - else if - else
     | id                                    #statId
     | id EQ val                             #assign
     | id EQ expr                            #assign
@@ -40,7 +42,14 @@ arrayType: 'int[]'
 repetitions: INT
     | ID;
 
+blockif: block;
+
+equal: ID '==' INT;
+// TODO: porównanie do czegokolwiek innego niż int???
+
 REPEAT: 'repeat';
+
+IF:	'if';
 
 PRINT: 'print';
 

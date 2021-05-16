@@ -50,6 +50,13 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRepeat(GrammarParser.RepeatContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code if}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIf(GrammarParser.IfContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code statId}
 	 * labeled alternative in {@link GrammarParser#stat}.
 	 * @param ctx the parse tree
@@ -186,4 +193,16 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitRepetitions(GrammarParser.RepetitionsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#blockif}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBlockif(GrammarParser.BlockifContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link GrammarParser#equal}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitEqual(GrammarParser.EqualContext ctx);
 }

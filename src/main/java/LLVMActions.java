@@ -38,6 +38,32 @@ public class LLVMActions extends GrammarBaseListener {
     }
 
     @Override
+    public void exitIf(GrammarParser.IfContext ctx) {
+    }
+
+    @Override
+    public void enterBlockif(GrammarParser.BlockifContext ctx) {
+        LLVMGenerator.ifstart();
+    }
+
+    @Override
+    public void exitBlockif(GrammarParser.BlockifContext ctx) {
+        LLVMGenerator.ifend();
+    }
+
+    @Override
+    public void exitEqual(GrammarParser.EqualContext ctx) {
+        String ID = ctx.ID().getText();
+        String INT = ctx.INT().getText();
+        if( variables.containsKey(ID) ) {
+            LLVMGenerator.icmp( ID, INT );
+        } else {
+            ctx.getStart().getLine();
+            System.err.println("Line "+ ctx.getStart().getLine()+", unknown variable: "+ID);
+        }
+    }
+
+    @Override
     public void exitBlock(GrammarParser.BlockContext ctx) {
         if( ctx.getParent() instanceof GrammarParser.RepeatContext ){
             LLVMGenerator.repeatEnd();
