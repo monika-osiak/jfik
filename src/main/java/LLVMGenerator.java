@@ -6,85 +6,91 @@ import java.util.Stack;
 public class LLVMGenerator {
     static String header_text = "";
     static String main_text = "";
+    static String buffer = ""; // dzięki niemu kawałek po kawałku dodajemy wygenerowany kod
+    static int main_reg = 1;
     static int reg = 1;
     static int br = 0;
 
     static Stack<Integer> brstack = new Stack<Integer>();
 
+    static void close_main(){
+        main_text += buffer; // na końcu dodaj pozostały buffer
+    }
+
     static void icmp(String id, String value){
-        main_text += "%"+reg+" = load i32, i32* %"+id+"\n";
+        buffer += "%"+reg+" = load i32, i32* %"+id+"\n";
         reg++;
-        main_text += "%"+reg+" = icmp eq i32 %"+(reg-1)+", "+value+"\n";
+        buffer += "%"+reg+" = icmp eq i32 %"+(reg-1)+", "+value+"\n";
         reg++;
     }
 
     static void ifstart(){
         br++;
-        main_text += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
-        main_text += "true"+br+":\n";
+        buffer += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
+        buffer += "true"+br+":\n";
         brstack.push(br);
     }
 
     static void ifend(){
         int b = brstack.pop();
-        main_text += "br label %false"+b+"\n";
-        main_text += "false"+b+":\n";
+        buffer += "br label %false"+b+"\n";
+        buffer += "false"+b+":\n";
     }
 
     static void scanf_i32(String id) { // scanf int
-        main_text += "%" + reg + " = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strsi, i64 0, i64 0), i32* %" + id + ")\n";
+        buffer += "%" + reg + " = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @strsi, i64 0, i64 0), i32* %" + id + ")\n";
         // %2 = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i64 0, i64 0), i32* %1)
         reg++;
     }
 
     static void scanf_double(String id) { // scanf int
-        main_text += "%" + reg + " = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strsd, i64 0, i64 0), double* %" + id + ")\n";
+        buffer += "%" + reg + " = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strsd, i64 0, i64 0), double* %" + id + ")\n";
         // %3 = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), double* %1)
         reg++;
     }
 
     static void printf_i32(String id) {
-        main_text += "%" + reg + " = load i32, i32* %" + id + "\n";
+        buffer += "%" + reg + " = load i32, i32* %" + id + "\n";
         reg++;
-        main_text += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32 %" + (reg - 1) + ")\n";
+        buffer += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32 %" + (reg - 1) + ")\n";
         reg++;
     }
 
     static void printf_double(String id) {
-        main_text += "%" + reg + " = load double, double* %" + id + "\n";
+        buffer += "%" + reg + " = load double, double* %" + id + "\n";
         reg++;
-        main_text += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @strpd, i64 0, i64 0), double %" + (reg - 1) + ")\n";
+        buffer += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @strpd, i64 0, i64 0), double %" + (reg - 1) + ")\n";
         reg++;
     }
 
     static void printf_string(String id, int size) {
-        main_text += "%" + reg + " = getelementptr inbounds [" + (size + 1) + " x i8], [" + (size + 1) + " x i8]* %" + id + ", i64 0, i64 0\n";
+        buffer += "%" + reg + " = getelementptr inbounds [" + (size + 1) + " x i8], [" + (size + 1) + " x i8]* %" + id + ", i64 0, i64 0\n";
         reg++;
         // %3 = getelementptr inbounds [9 x i8], [9 x i8]* %1, i64 0, i64 0
-        main_text += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strps, i64 0, i64 0), i8* %" + (reg - 1) + ")\n";
+        buffer += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strps, i64 0, i64 0), i8* %" + (reg - 1) + ")\n";
         reg++;
         // %4 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i64 0, i64 0), i8* %3)
     }
 
     static void printf_unknown_string(String id, int size) {
-        main_text += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([" + (size + 2) + " x i8], [" + (size + 2) + " x i8]* @" + id + ", i64 0, i64 0))\n";
+        buffer += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([" + (size + 2) + " x i8], [" + (size + 2) + " x i8]* @" + id + ", i64 0, i64 0))\n";
         reg++;
         // %2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str.1, i64 0, i64 0))
     }
 
     static void declare_i32(String id) {
-        main_text += "%" + id + " = alloca i32\n";
+        buffer += "%" + id + " = alloca i32\n";
     }
 
     static void declare_double(String id) {
-        main_text += "%" + id + " = alloca double\n";
+        buffer += "%" + id + " = alloca double\n";
     }
 
     static void declare_i32_array(String id, int size) {
-        main_text += "%" + id + " = alloca [" + size + " x i32], align 16\n";
-        main_text += "%" + reg + " = bitcast [" + size + " x i32]* %" + id + " to i8*\n";
+        buffer += "%" + id + " = alloca [" + size + " x i32], align 16\n";
+        buffer += "%" + reg + " = bitcast [" + size + " x i32]* %" + id + " to i8*\n";
         reg++;
-        main_text += "call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 %" + (reg - 1) +
+        buffer += "call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 %" + (reg - 1) +
                 ", i8* align 16 bitcast ([" + size + " x i32]* @" + id + " to i8*), i64 " + (size * 4) + ", i1 false)\n";
         // %1 = alloca [3 x i32], align 4
         // %3 = bitcast [3 x i32]* %1 to i8*
@@ -92,10 +98,10 @@ public class LLVMGenerator {
     }
 
     static void declare_double_array(String id, int size) {
-        main_text += "%" + id + " = alloca [" + size + " x double], align 16\n";
-        main_text += "%" + reg + " = bitcast [" + size + " x double]* %" + id + " to i8*\n";
+        buffer += "%" + id + " = alloca [" + size + " x double], align 16\n";
+        buffer += "%" + reg + " = bitcast [" + size + " x double]* %" + id + " to i8*\n";
         reg++;
-        main_text += "call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 %" + (reg - 1) +
+        buffer += "call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 16 %" + (reg - 1) +
                 ", i8* align 16 bitcast ([" + size + " x double]* @" + id + " to i8*), i64 " + (size * 8) + ", i1 false)\n";
         // %1 = alloca [3 x float], align 4
         // %3 = bitcast [3 x float]* %1 to i8*
@@ -103,10 +109,10 @@ public class LLVMGenerator {
     }
 
     static void declare_string(String id, int size) {
-        main_text += "%" + id + " = alloca [" + (size + 1) + " x i8], align 1\n";
-        main_text += "%" + reg + " = bitcast [" + (size + 1) + " x i8]* %" + id + " to i8*\n";
+        buffer += "%" + id + " = alloca [" + (size + 1) + " x i8], align 1\n";
+        buffer += "%" + reg + " = bitcast [" + (size + 1) + " x i8]* %" + id + " to i8*\n";
         reg++;
-        main_text += "call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 1 %" + (reg - 1) +
+        buffer += "call void @llvm.memcpy.p0i8.p0i8.i64(i8* align 1 %" + (reg - 1) +
                 ", i8* align 1 getelementptr inbounds ([" + (size + 1) + " x i8], [" + (size + 1) + " x i8]* @" + id + ", i32 0, i32 0), i64 " + (size + 1) + ", i1 false)\n";
         // %1 = alloca [9 x i8], align 1
         // %2 = bitcast [9 x i8]* %1 to i8*
@@ -114,50 +120,50 @@ public class LLVMGenerator {
     }
 
     static void assign_i32(String id, String value) {
-        main_text += "store i32 " + value + ", i32* %" + id + "\n";
+        buffer += "store i32 " + value + ", i32* %" + id + "\n";
     }
 
     static void assign_double(String id, String value) {
-        main_text += "store double " + value + ", double* %" + id + "\n";
+        buffer += "store double " + value + ", double* %" + id + "\n";
     }
 
     static void load_i32(String id) {
-        main_text += "%" + reg + " = load i32, i32* %" + id + "\n";
+        buffer += "%" + reg + " = load i32, i32* %" + id + "\n";
         reg++;
     }
 
     static void load_double(String id) {
-        main_text += "%" + reg + " = load double, double* %" + id + "\n";
+        buffer += "%" + reg + " = load double, double* %" + id + "\n";
         reg++;
     }
 
     static void getelementptr_i32(String id, int size, int index) {
-        main_text += "%" + reg + " = getelementptr inbounds [" + size + " x i32], [" + size + " x i32]* %" + id + ", i64 0, i64 " + index + "\n";
+        buffer += "%" + reg + " = getelementptr inbounds [" + size + " x i32], [" + size + " x i32]* %" + id + ", i64 0, i64 " + index + "\n";
         reg++;
     }
 
     static void getelementptr_double(String id, int size, int index) {
-        main_text += "%" + reg + " = getelementptr inbounds [" + size + " x double], [" + size + " x double]* %" + id + ", i64 0, i64 " + index + "\n";
+        buffer += "%" + reg + " = getelementptr inbounds [" + size + " x double], [" + size + " x double]* %" + id + ", i64 0, i64 " + index + "\n";
         reg++;
     }
 
     static void add_i32(String val1, String val2) {
-        main_text += "%" + reg + " = add i32 " + val1 + ", " + val2 + "\n";
+        buffer += "%" + reg + " = add i32 " + val1 + ", " + val2 + "\n";
         reg++;
     }
 
     static void add_double(String val1, String val2) {
-        main_text += "%" + reg + " = fadd double " + val1 + ", " + val2 + "\n";
+        buffer += "%" + reg + " = fadd double " + val1 + ", " + val2 + "\n";
         reg++;
     }
 
     static void sub_i32(String val1, String val2) {
-        main_text += "%" + reg + " = sub i32 " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
+        buffer += "%" + reg + " = sub i32 " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
         reg++;
     }
 
     static void sub_double(String val1, String val2) {
-        main_text += "%" + reg + " = fsub double " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
+        buffer += "%" + reg + " = fsub double " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
         reg++;
     }
 
@@ -167,27 +173,27 @@ public class LLVMGenerator {
     }
 
     static void mul_double(String val1, String val2) {
-        main_text += "%" + reg + " = fmul double " + val1 + ", " + val2 + "\n";
+        buffer += "%" + reg + " = fmul double " + val1 + ", " + val2 + "\n";
         reg++;
     }
 
     static void div_i32(String val1, String val2) {
-        main_text += "%" + reg + " = udiv i32 " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
+        buffer += "%" + reg + " = udiv i32 " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
         reg++;
     }
 
     static void div_double(String val1, String val2) {
-        main_text += "%" + reg + " = fdiv double " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
+        buffer += "%" + reg + " = fdiv double " + val2 + ", " + val1 + "\n"; // kolejność odwrotna!!!
         reg++;
     }
 
     static void sitofp(String id) {
-        main_text += "%" + reg + " = sitofp i32 " + id + " to double\n";
+        buffer += "%" + reg + " = sitofp i32 " + id + " to double\n";
         reg++;
     }
 
     static void fptosi(String id) {
-        main_text += "%" + reg + " = fptosi double " + id + " to i32\n";
+        buffer += "%" + reg + " = fptosi double " + id + " to i32\n";
         reg++;
     }
 
@@ -197,25 +203,25 @@ public class LLVMGenerator {
         reg++;
         assign_i32(Integer.toString(counter), "0");
         br++;
-        main_text += "br label %cond"+br+"\n";
-        main_text += "cond"+br+":\n";
+        buffer += "br label %cond"+br+"\n";
+        buffer += "cond"+br+":\n";
 
         load_i32(Integer.toString(counter));
         add_i32("%"+(reg-1), "1");
         assign_i32(Integer.toString(counter), "%"+(reg-1));
 
-        main_text += "%"+reg+" = icmp slt i32 %"+(reg-2)+", "+repetitions+"\n";
+        buffer += "%"+reg+" = icmp slt i32 %"+(reg-2)+", "+repetitions+"\n";
         reg++;
 
-        main_text += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
-        main_text += "true"+br+":\n";
+        buffer += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
+        buffer += "true"+br+":\n";
         brstack.push(br);
     }
 
     static void repeatEnd(){
         int b = brstack.pop();
-        main_text += "br label %cond"+b+"\n";
-        main_text += "false"+b+":\n";
+        buffer += "br label %cond"+b+"\n";
+        buffer += "false"+b+":\n";
     }
 
     static String getConsts(HashMap<String, Array> consts) {

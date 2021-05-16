@@ -24,6 +24,7 @@ class Array {
 
 public class LLVMActions extends GrammarBaseListener {
     HashMap<String, String> variables = new HashMap<String, String>(); // wszystkie zmienne: ID -> typ zmiennej
+    // variables zawiera consts
     HashMap<String, Array> consts = new HashMap<String, Array>(); // wszystkie stałe: ID -> array
     Stack<Value> stack = new Stack<Value>();
     int undeclaredStrings = 0;
@@ -35,6 +36,11 @@ public class LLVMActions extends GrammarBaseListener {
     public void error(int line, String msg) {
         System.err.println("Error, line " + line + ", " + msg);
         System.exit(1);
+    }
+
+    @Override
+    public void exitProgram(GrammarParser.ProgramContext ctc) {
+        LLVMGenerator.close_main();
     }
 
     @Override
