@@ -13,28 +13,48 @@ public class LLVMGenerator {
 
     static Stack<Integer> brstack = new Stack<Integer>();
 
-    static void close_main(){
+    static void close_main() {
         main_text += buffer; // na końcu dodaj pozostały buffer
     }
 
-    static void icmp(String id, String value){
-        buffer += "%"+reg+" = load i32, i32* %"+id+"\n";
-        reg++;
-        buffer += "%"+reg+" = icmp eq i32 %"+(reg-1)+", "+value+"\n";
+    static void functionstart(String id) {
+        main_text += buffer; // dodaj dotychczasowy buffer
+        main_reg = reg; // dotychczasowy reg zapisz jako main_reg
+        buffer = "define i32 @" + id + "() nounwind {\n";
+        reg = 1; // nowy reg dla funkcji
+    }
+
+    static void functionend() {
+        buffer += "ret i32 %" + (reg - 1) + "\n";
+        buffer += "}\n";
+        header_text += buffer; // dodaj buffer do headera [po co?????]
+        buffer = ""; // wyczyść buffer
+        reg = main_reg; // reg wraca do normy
+    }
+
+    static void call(String id) { // klasyk
+        buffer += "%" + reg + " = call i32 @" + id + "()\n";
         reg++;
     }
 
-    static void ifstart(){
+    static void icmp(String id, String value) {
+        buffer += "%" + reg + " = load i32, i32* %" + id + "\n";
+        reg++;
+        buffer += "%" + reg + " = icmp eq i32 %" + (reg - 1) + ", " + value + "\n";
+        reg++;
+    }
+
+    static void ifstart() {
         br++;
-        buffer += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
-        buffer += "true"+br+":\n";
+        buffer += "br i1 %" + (reg - 1) + ", label %true" + br + ", label %false" + br + "\n";
+        buffer += "true" + br + ":\n";
         brstack.push(br);
     }
 
-    static void ifend(){
+    static void ifend() {
         int b = brstack.pop();
-        buffer += "br label %false"+b+"\n";
-        buffer += "false"+b+":\n";
+        buffer += "br label %false" + b + "\n";
+        buffer += "false" + b + ":\n";
     }
 
     static void scanf_i32(String id) { // scanf int
@@ -76,6 +96,14 @@ public class LLVMGenerator {
         buffer += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([" + (size + 2) + " x i8], [" + (size + 2) + " x i8]* @" + id + ", i64 0, i64 0))\n";
         reg++;
         // %2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str.1, i64 0, i64 0))
+    }
+
+    static void declare_global_i32(String id, Boolean global) {
+        header_text += "@" + id + " = global i32 0\n";
+    }
+
+    static void declare_global_double(String id) {
+        header_text += "@" + id + " = global double 0\n";
     }
 
     static void declare_i32(String id) {
@@ -197,31 +225,31 @@ public class LLVMGenerator {
         reg++;
     }
 
-    static void repeatStart(String repetitions){
+    static void repeatStart(String repetitions) {
         declare_i32(Integer.toString(reg));
         int counter = reg;
         reg++;
         assign_i32(Integer.toString(counter), "0");
         br++;
-        buffer += "br label %cond"+br+"\n";
-        buffer += "cond"+br+":\n";
+        buffer += "br label %cond" + br + "\n";
+        buffer += "cond" + br + ":\n";
 
         load_i32(Integer.toString(counter));
-        add_i32("%"+(reg-1), "1");
-        assign_i32(Integer.toString(counter), "%"+(reg-1));
+        add_i32("%" + (reg - 1), "1");
+        assign_i32(Integer.toString(counter), "%" + (reg - 1));
 
-        buffer += "%"+reg+" = icmp slt i32 %"+(reg-2)+", "+repetitions+"\n";
+        buffer += "%" + reg + " = icmp slt i32 %" + (reg - 2) + ", " + repetitions + "\n";
         reg++;
 
-        buffer += "br i1 %"+(reg-1)+", label %true"+br+", label %false"+br+"\n";
-        buffer += "true"+br+":\n";
+        buffer += "br i1 %" + (reg - 1) + ", label %true" + br + ", label %false" + br + "\n";
+        buffer += "true" + br + ":\n";
         brstack.push(br);
     }
 
-    static void repeatEnd(){
+    static void repeatEnd() {
         int b = brstack.pop();
-        buffer += "br label %cond"+b+"\n";
-        buffer += "false"+b+":\n";
+        buffer += "br label %cond" + b + "\n";
+        buffer += "false" + b + ":\n";
     }
 
     static String getConsts(HashMap<String, Array> consts) {
