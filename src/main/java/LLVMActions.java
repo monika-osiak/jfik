@@ -30,6 +30,8 @@ public class LLVMActions extends GrammarBaseListener {
     Stack<Value> stack = new Stack<Value>();
     int undeclaredStrings = 0;
 
+    // TODO: naprawić zmienne lokalne/globalne -> newVar, assign
+    // generalnie napisać swoją wersję funkcji setVariable, która zwraca @ lub % i usunąć te znaki z LLVMGen
     HashSet<String> globalnames = new HashSet<String>();
     HashSet<String> functions = new HashSet<String>();
     HashSet<String> localnames = new HashSet<String>();
