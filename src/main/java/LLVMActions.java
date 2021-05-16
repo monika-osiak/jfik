@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Stack;
 
 class Value {
@@ -29,6 +30,12 @@ public class LLVMActions extends GrammarBaseListener {
     Stack<Value> stack = new Stack<Value>();
     int undeclaredStrings = 0;
 
+    HashSet<String> globalnames = new HashSet<String>();
+    HashSet<String> functions = new HashSet<String>();
+    HashSet<String> localnames = new HashSet<String>();
+    String value, function;
+    Boolean global;
+
     public String generate() {
         return LLVMGenerator.generate(consts);
     }
@@ -39,8 +46,52 @@ public class LLVMActions extends GrammarBaseListener {
     }
 
     @Override
+    public void enterProgram(GrammarParser.ProgramContext ctx) {
+        global = true;
+    }
+
+    @Override
     public void exitProgram(GrammarParser.ProgramContext ctc) {
         LLVMGenerator.close_main();
+    }
+
+    @Override
+    public void exitName(GrammarParser.NameContext ctx) {
+        String ID = ctx.ID().getText(); // weź nazwę
+        if (!variables.containsKey(ID)) { // jeśli nie ma takiej zmiennej
+            variables.put(ID, "function"); // dodaj ją do listy
+            functions.add(ID); // dodaj do nazw funkcji
+            function = ID; // bieżąca funkcja
+            LLVMGenerator.functionstart(ID);
+        } else { // taka zmienna już istnieje
+            error(ctx.getStart().getLine(), "Name " + ID + " already declared");
+        }
+    }
+
+    @Override
+    public void enterFblock(GrammarParser.FblockContext ctx) {
+        global = false; // jesteśmy w funkcji, nie globalnie
+    }
+
+    @Override
+    public void exitFblock(GrammarParser.FblockContext ctx) {
+        if( ! localnames.contains(function) ){ // jeśli nie ma takiej zmiennej lokalnej
+            LLVMGenerator.assign_i32(set_variable(function), "0"); // to ją zapisz
+        }
+        LLVMGenerator.load_i32( function ); // załaduj
+        LLVMGenerator.functionend(); // zakończ funkcję pod spodem
+        localnames = new HashSet<String>(); // wyczyść lokalne zmienne
+        global = true; // wróć do globala
+    }
+
+    @Override
+    public void exitCall(GrammarParser.CallContext ctx) {
+        String ID = ctx.ID().getText();
+        if(functions.contains(ID)) {
+            LLVMGenerator.call(ID);
+        } else {
+            error(ctx.getStart().getLine(), ID + " is not a fuction");
+        }
     }
 
     @Override
@@ -359,5 +410,23 @@ public class LLVMActions extends GrammarBaseListener {
         } else {
             error(ctx.getStart().getLine(), "Variable " + ID + " already declared");
         }
+    }
+
+    public String set_variable(String ID){
+        String id=ID;
+        if( global ){
+            if( ! globalnames.contains(ID) ) {
+                globalnames.add(ID);
+                LLVMGenerator.declare_global_i32(ID);
+            }
+            //id = "@"+ID;
+        } else {
+            if( ! localnames.contains(ID) ) {
+                localnames.add(ID);
+                LLVMGenerator.declare_i32(ID);
+            }
+            //id = "%"+ID;
+        }
+        return id;
     }
 }

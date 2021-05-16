@@ -10,12 +10,12 @@ stat: PRINT ID                              #print
     | REPEAT repetitions '{' block '}'      #repeat
     | IF equal '{' blockif  '}'             #if
     // TODO: dodać if - else if - else
+    | ID '()'                               #call
     | id                                    #statId
     | id EQ val                             #assign
     | id EQ expr                            #assign
     | 'string' ID EQ STRING                 #newString
-    | arrayType ID EQ '[' (number)* ']'     #newArray
-    | ID                                    #call;
+    | arrayType ID EQ '[' (number)* ']'     #newArray;
 
 function: FUNCTION name '{' fblock '}';
 

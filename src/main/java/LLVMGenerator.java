@@ -98,7 +98,7 @@ public class LLVMGenerator {
         // %2 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([8 x i8], [8 x i8]* @.str.1, i64 0, i64 0))
     }
 
-    static void declare_global_i32(String id, Boolean global) {
+    static void declare_global_i32(String id) {
         header_text += "@" + id + " = global i32 0\n";
     }
 

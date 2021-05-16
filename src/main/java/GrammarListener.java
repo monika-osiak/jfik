@@ -87,6 +87,18 @@ public interface GrammarListener extends ParseTreeListener {
 	 */
 	void exitIf(GrammarParser.IfContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code call}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void enterCall(GrammarParser.CallContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code call}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void exitCall(GrammarParser.CallContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code statId}
 	 * labeled alternative in {@link GrammarParser#stat}.
 	 * @param ctx the parse tree
@@ -134,18 +146,6 @@ public interface GrammarListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNewArray(GrammarParser.NewArrayContext ctx);
-	/**
-	 * Enter a parse tree produced by the {@code call}
-	 * labeled alternative in {@link GrammarParser#stat}.
-	 * @param ctx the parse tree
-	 */
-	void enterCall(GrammarParser.CallContext ctx);
-	/**
-	 * Exit a parse tree produced by the {@code call}
-	 * labeled alternative in {@link GrammarParser#stat}.
-	 * @param ctx the parse tree
-	 */
-	void exitCall(GrammarParser.CallContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link GrammarParser#function}.
 	 * @param ctx the parse tree

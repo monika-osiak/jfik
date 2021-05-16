@@ -57,6 +57,13 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitIf(GrammarParser.IfContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code call}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCall(GrammarParser.CallContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code statId}
 	 * labeled alternative in {@link GrammarParser#stat}.
 	 * @param ctx the parse tree
@@ -84,13 +91,6 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitNewArray(GrammarParser.NewArrayContext ctx);
-	/**
-	 * Visit a parse tree produced by the {@code call}
-	 * labeled alternative in {@link GrammarParser#stat}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCall(GrammarParser.CallContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link GrammarParser#function}.
 	 * @param ctx the parse tree
