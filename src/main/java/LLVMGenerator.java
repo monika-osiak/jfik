@@ -38,7 +38,7 @@ public class LLVMGenerator {
     }
 
     static void icmp(String id, String value) {
-        buffer += "%" + reg + " = load i32, i32* %" + id + "\n";
+        buffer += "%" + reg + " = load i32, i32* " + id + "\n";
         reg++;
         buffer += "%" + reg + " = icmp eq i32 %" + (reg - 1) + ", " + value + "\n";
         reg++;
@@ -70,14 +70,14 @@ public class LLVMGenerator {
     }
 
     static void printf_i32(String id) {
-        buffer += "%" + reg + " = load i32, i32* %" + id + "\n";
+        buffer += "%" + reg + " = load i32, i32* " + id + "\n";
         reg++;
         buffer += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @strpi, i32 0, i32 0), i32 %" + (reg - 1) + ")\n";
         reg++;
     }
 
     static void printf_double(String id) {
-        buffer += "%" + reg + " = load double, double* %" + id + "\n";
+        buffer += "%" + reg + " = load double, double* " + id + "\n";
         reg++;
         buffer += "%" + reg + " = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([5 x i8], [5 x i8]* @strpd, i64 0, i64 0), double %" + (reg - 1) + ")\n";
         reg++;
@@ -99,19 +99,19 @@ public class LLVMGenerator {
     }
 
     static void declare_global_i32(String id) {
-        header_text += "@" + id + " = global i32 0\n";
+        header_text += id + " = global i32 0\n";
     }
 
     static void declare_global_double(String id) {
-        header_text += "@" + id + " = global double 0\n";
+        header_text +=  id + " = global double 0\n";
     }
 
     static void declare_i32(String id) {
-        buffer += "%" + id + " = alloca i32\n";
+        buffer += id + " = alloca i32\n";
     }
 
     static void declare_double(String id) {
-        buffer += "%" + id + " = alloca double\n";
+        buffer += id + " = alloca double\n";
     }
 
     static void declare_i32_array(String id, int size) {
@@ -148,7 +148,7 @@ public class LLVMGenerator {
     }
 
     static void assign_i32(String id, String value) {
-        buffer += "store i32 " + value + ", i32* %" + id + "\n";
+        buffer += "store i32 " + value + ", i32* " + id + "\n";
     }
 
     static void assign_double(String id, String value) {
@@ -156,12 +156,12 @@ public class LLVMGenerator {
     }
 
     static void load_i32(String id) {
-        buffer += "%" + reg + " = load i32, i32* %" + id + "\n";
+        buffer += "%" + reg + " = load i32, i32* " + id + "\n";
         reg++;
     }
 
     static void load_double(String id) {
-        buffer += "%" + reg + " = load double, double* %" + id + "\n";
+        buffer += "%" + reg + " = load double, double* " + id + "\n";
         reg++;
     }
 
@@ -226,17 +226,17 @@ public class LLVMGenerator {
     }
 
     static void repeatStart(String repetitions) {
-        declare_i32(Integer.toString(reg));
+        declare_i32("%"+reg);
         int counter = reg;
         reg++;
-        assign_i32(Integer.toString(counter), "0");
+        assign_i32("%"+counter, "0");
         br++;
         buffer += "br label %cond" + br + "\n";
         buffer += "cond" + br + ":\n";
 
-        load_i32(Integer.toString(counter));
+        load_i32("%"+counter);
         add_i32("%" + (reg - 1), "1");
-        assign_i32(Integer.toString(counter), "%" + (reg - 1));
+        assign_i32("%"+counter, "%" + (reg - 1));
 
         buffer += "%" + reg + " = icmp slt i32 %" + (reg - 2) + ", " + repetitions + "\n";
         reg++;
