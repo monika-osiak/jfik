@@ -11,7 +11,9 @@ if i == 4 {
 
 def wypisz {
     print "Write something"
+    int j = i + 2
     print i
+    print j
 }
 
 wypisz()

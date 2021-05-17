@@ -186,9 +186,15 @@ public class LLVMActions extends GrammarBaseListener {
 
     @Override
     public void exitPrint(GrammarParser.PrintContext ctx) {
+        // tak, wiem, kod tej metody to dramat :/ ale działa (chyba lmao)
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
-        ID = global ? "@" + ID : "%" + ID;
-        String type = global ? variables.get(ID) : localVariables.get(ID);
+        String newID = "@"+ID;
+        String type = variables.get(newID);
+        if(type == null && !global) { // nie ma takiej zmiennej globalnej
+            newID = "%"+ID;
+            type = localVariables.get(newID); // pobierz zmienną lokalną
+        }
+        ID = newID;
         if (type == null) { // złap string, który nie ma w ID ani @ ani %
             ID = ctx.ID().getText();
             type = variables.get(ID);
@@ -236,9 +242,47 @@ public class LLVMActions extends GrammarBaseListener {
 
     @Override
     public void exitValId(GrammarParser.ValIdContext ctx) {
+        /*
+        String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
+        String newID = "@"+ID;
+        String type = variables.get(newID);
+        if(type == null && !global) { // nie ma takiej zmiennej globalnej
+            newID = "%"+ID;
+            type = localVariables.get(newID); // pobierz zmienną lokalną
+        }
+        ID = newID;
+        if (type == null) { // złap string, który nie ma w ID ani @ ani %
+            ID = ctx.ID().getText();
+            type = variables.get(ID);
+        }
+        if (type != null) {
+            if (type.equals("int")) { // wypisz int
+                LLVMGenerator.printf_i32(ID);
+            } else if (type.equals("float")) { // wypisz float
+                LLVMGenerator.printf_double(ID);
+            } else if (type.equals("string")) { // wypisz string
+                LLVMGenerator.printf_string(ID, consts.get(ID).values.get(0).length());
+            }
+        } else { // nie ma takiej zmiennej
+            error(ctx.getStart().getLine(), "Unknown variable " + ID);
+        }
+         */
+
+        /*
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
         ID = global ? "@" + ID : "%" + ID;
         String type = global ? variables.get(ID) : localVariables.get(ID); // pobierz typ zmiennej
+
+         */
+        String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
+        String newID = "@"+ID;
+        String type = variables.get(newID);
+        if(type == null && !global) { // nie ma takiej zmiennej globalnej
+            newID = "%"+ID;
+            type = localVariables.get(newID); // pobierz zmienną lokalną
+        }
+        ID = newID;
+
         if (type != null) {
             if (type.equals("int")) {
                 LLVMGenerator.load_i32(ID);
