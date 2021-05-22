@@ -63,6 +63,10 @@ public class LLVMActions extends GrammarBaseListener {
         System.exit(1);
     }
 
+    public String cutDot(String ID) {
+        return ID.replace(".", "");
+    }
+
     // STRUKTURY
     @Override
     public void exitDefStruct(GrammarParser.DefStructContext ctx) {
@@ -338,6 +342,7 @@ public class LLVMActions extends GrammarBaseListener {
     @Override
     public void exitValId(GrammarParser.ValIdContext ctx) {
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
+        ID = cutDot(ID);
         String newID = "@"+ID;
         String type = variables.get(newID);
         if(type == null && !global) { // nie ma takiej zmiennej globalnej
@@ -345,7 +350,6 @@ public class LLVMActions extends GrammarBaseListener {
             type = localVariables.get(newID); // pobierz zmienną lokalną
         }
         ID = newID;
-
         if (type != null) {
             if (type.equals("int")) {
                 LLVMGenerator.load_i32(ID);
@@ -480,6 +484,7 @@ public class LLVMActions extends GrammarBaseListener {
     public void exitVar(GrammarParser.VarContext ctx) {
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
         ID = global ? "@" + ID : "%" + ID;
+        ID = cutDot(ID);
         if (!variables.containsKey(ID)) { // nie ma takiej zmiennej globalnej
             if (!global && !localVariables.containsKey(ID)) { // nie ma takiej zmiennej lokalnej
                 error(ctx.getStart().getLine(), "Unknown variable " + ID);
@@ -558,6 +563,7 @@ public class LLVMActions extends GrammarBaseListener {
     public void exitAssign(GrammarParser.AssignContext ctx) {
         String ID = ctx.id().children.get(ctx.id().children.size() - 1).toString(); // pobierz nazwę zmiennej
         ID = global ? "@" + ID : "%" + ID;
+        ID = cutDot(ID);
         Value value = stack.pop(); // pobierz wartość ze stosu
         // to czy zmienna istnieje jest sprawdzane w exitVar
         if(variables.containsKey(ID)) {

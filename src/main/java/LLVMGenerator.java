@@ -196,7 +196,7 @@ public class LLVMGenerator {
     }
 
     static void mul_i32(String val1, String val2) {
-        main_text += "%" + reg + " = mul i32 " + val1 + ", " + val2 + "\n";
+        buffer += "%" + reg + " = mul i32 " + val1 + ", " + val2 + "\n";
         reg++;
     }
 

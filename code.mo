@@ -1,4 +1,18 @@
+Point {
+    int x
+    int y
+}
+
 int i = 1
+
+def wypisz {
+    print "Write something"
+    int j = i + 2
+    print i
+    print j
+}
+
+wypisz()
 
 repeat 3 {
     print i
@@ -9,11 +23,10 @@ if i == 4 {
     print "CZTERY"
 }
 
-def wypisz {
-    print "Write something"
-    int j = i + 2
-    print i
-    print j
-}
+Point p = Point(10 22)
+p.x = 5
 
-wypisz()
+print p
+
+int s = p.x * p.x
+print s
