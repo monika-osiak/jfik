@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Stack;
 
 class Value {
@@ -24,9 +25,21 @@ class Array {
 
 public class LLVMActions extends GrammarBaseListener {
     HashMap<String, String> variables = new HashMap<String, String>(); // wszystkie zmienne: ID -> typ zmiennej
+    HashMap<String, String> localVariables = new HashMap<String, String>(); // wszystkie zmienne: ID -> typ zmiennej
+    // variables zawiera consts
     HashMap<String, Array> consts = new HashMap<String, Array>(); // wszystkie stałe: ID -> array
     Stack<Value> stack = new Stack<Value>();
     int undeclaredStrings = 0;
+
+    // TODO: naprawić zmienne lokalne/globalne -> newVar, assign
+    // generalnie napisać swoją wersję funkcji setVariable, która zwraca @ lub % i usunąć te znaki z LLVMGen
+    HashSet<String> globalnames = new HashSet<String>();
+    HashSet<String> functions = new HashSet<String>();
+    HashSet<String> localnames = new HashSet<String>();
+    String value, function;
+    Boolean global;
+
+    // METODY POMOCNICZE
 
     public String generate() {
         return LLVMGenerator.generate(consts);
@@ -36,6 +49,66 @@ public class LLVMActions extends GrammarBaseListener {
         System.err.println("Error, line " + line + ", " + msg);
         System.exit(1);
     }
+
+    // METODY OGÓLNE
+
+    @Override
+    public void enterProgram(GrammarParser.ProgramContext ctx) {
+        global = true;
+    }
+
+    @Override
+    public void exitProgram(GrammarParser.ProgramContext ctc) {
+        LLVMGenerator.close_main();
+    }
+
+    // FUNCTION
+
+    @Override
+    public void exitName(GrammarParser.NameContext ctx) {
+        String ID = ctx.ID().getText(); // weź nazwę
+        // ID = global ? "@" + ID : "%" + ID;
+        if (!variables.containsKey(ID)) { // jeśli nie ma takiej zmiennej
+            variables.put(ID, "function"); // dodaj ją do listy
+            functions.add(ID); // dodaj do nazw funkcji
+            function = ID; // bieżąca funkcja
+            LLVMGenerator.functionstart(ID);
+        } else { // taka zmienna już istnieje
+            error(ctx.getStart().getLine(), "Name " + ID + " already declared");
+        }
+    }
+
+    @Override
+    public void enterFblock(GrammarParser.FblockContext ctx) {
+        global = false; // jesteśmy w funkcji, nie globalnie
+    }
+
+    @Override
+    public void exitFblock(GrammarParser.FblockContext ctx) {
+        String ID = "%" + function;
+        if(!localVariables.containsKey(function) ){ // jeśli nie ma takiej zmiennej lokalnej
+            localVariables.put(function, "function");
+            LLVMGenerator.declare_i32(ID);
+            LLVMGenerator.assign_i32(ID, "0"); // to ją zapisz
+        }
+        LLVMGenerator.load_i32( ID ); // załaduj
+        LLVMGenerator.functionend(); // zakończ funkcję pod spodem
+        localVariables = new HashMap<String, String>();
+        // localnames = new HashSet<String>(); // wyczyść lokalne zmienne
+        global = true; // wróć do globala
+    }
+
+    @Override
+    public void exitCall(GrammarParser.CallContext ctx) {
+        String ID = ctx.ID().getText();
+        if(functions.contains(ID)) {
+            LLVMGenerator.call(ID);
+        } else {
+            error(ctx.getStart().getLine(), ID + " is not a fuction");
+        }
+    }
+
+    // IF
 
     @Override
     public void exitIf(GrammarParser.IfContext ctx) {
@@ -54,6 +127,7 @@ public class LLVMActions extends GrammarBaseListener {
     @Override
     public void exitEqual(GrammarParser.EqualContext ctx) {
         String ID = ctx.ID().getText();
+        ID = global ? "@" + ID : "%" + ID;
         String INT = ctx.INT().getText();
         if( variables.containsKey(ID) ) {
             LLVMGenerator.icmp( ID, INT );
@@ -62,6 +136,8 @@ public class LLVMActions extends GrammarBaseListener {
             System.err.println("Line "+ ctx.getStart().getLine()+", unknown variable: "+ID);
         }
     }
+
+    // LOOP
 
     @Override
     public void exitBlock(GrammarParser.BlockContext ctx) {
@@ -91,6 +167,8 @@ public class LLVMActions extends GrammarBaseListener {
         LLVMGenerator.repeatStart(value);
     }
 
+    // IN/OUT
+
     @Override
     public void exitRead(GrammarParser.ReadContext ctx) {
         String ID = ctx.ID().getText();
@@ -108,8 +186,19 @@ public class LLVMActions extends GrammarBaseListener {
 
     @Override
     public void exitPrint(GrammarParser.PrintContext ctx) {
+        // tak, wiem, kod tej metody to dramat :/ ale działa (chyba lmao)
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
-        String type = variables.get(ID);
+        String newID = "@"+ID;
+        String type = variables.get(newID);
+        if(type == null && !global) { // nie ma takiej zmiennej globalnej
+            newID = "%"+ID;
+            type = localVariables.get(newID); // pobierz zmienną lokalną
+        }
+        ID = newID;
+        if (type == null) { // złap string, który nie ma w ID ani @ ani %
+            ID = ctx.ID().getText();
+            type = variables.get(ID);
+        }
         if (type != null) {
             if (type.equals("int")) { // wypisz int
                 LLVMGenerator.printf_i32(ID);
@@ -135,21 +224,7 @@ public class LLVMActions extends GrammarBaseListener {
         LLVMGenerator.printf_unknown_string(ID, string.length());
     }
 
-    @Override
-    public void exitAssign(GrammarParser.AssignContext ctx) {
-        String ID = ctx.id().children.get(ctx.id().children.size() - 1).toString(); // pobierz nazwę zmiennej
-        Value value = stack.pop(); // pobierz wartość ze stosu
-        if (variables.get(ID).equals(value.type)) {
-            variables.put(ID, value.type); // dodaj zmienną i wartość do listy
-            if (value.type.equals("int")) {
-                LLVMGenerator.assign_i32(ID, value.name);
-            } else if (value.type.equals("float")) {
-                LLVMGenerator.assign_double(ID, value.name);
-            }
-        } else {
-            error(ctx.getStart().getLine(), "Assign type mismatch");
-        }
-    }
+    // DZIAŁANIA ARYTMETYCZNE
 
     @Override
     public void exitToInt(GrammarParser.ToIntContext ctx) {
@@ -167,8 +242,47 @@ public class LLVMActions extends GrammarBaseListener {
 
     @Override
     public void exitValId(GrammarParser.ValIdContext ctx) {
+        /*
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
-        String type = variables.get(ID); // pobierz typ zmiennej
+        String newID = "@"+ID;
+        String type = variables.get(newID);
+        if(type == null && !global) { // nie ma takiej zmiennej globalnej
+            newID = "%"+ID;
+            type = localVariables.get(newID); // pobierz zmienną lokalną
+        }
+        ID = newID;
+        if (type == null) { // złap string, który nie ma w ID ani @ ani %
+            ID = ctx.ID().getText();
+            type = variables.get(ID);
+        }
+        if (type != null) {
+            if (type.equals("int")) { // wypisz int
+                LLVMGenerator.printf_i32(ID);
+            } else if (type.equals("float")) { // wypisz float
+                LLVMGenerator.printf_double(ID);
+            } else if (type.equals("string")) { // wypisz string
+                LLVMGenerator.printf_string(ID, consts.get(ID).values.get(0).length());
+            }
+        } else { // nie ma takiej zmiennej
+            error(ctx.getStart().getLine(), "Unknown variable " + ID);
+        }
+         */
+
+        /*
+        String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
+        ID = global ? "@" + ID : "%" + ID;
+        String type = global ? variables.get(ID) : localVariables.get(ID); // pobierz typ zmiennej
+
+         */
+        String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
+        String newID = "@"+ID;
+        String type = variables.get(newID);
+        if(type == null && !global) { // nie ma takiej zmiennej globalnej
+            newID = "%"+ID;
+            type = localVariables.get(newID); // pobierz zmienną lokalną
+        }
+        ID = newID;
+
         if (type != null) {
             if (type.equals("int")) {
                 LLVMGenerator.load_i32(ID);
@@ -264,27 +378,49 @@ public class LLVMActions extends GrammarBaseListener {
         stack.push(new Value(ctx.FLOAT().getText(), "float")); // połóż na stosie float
     }
 
+    // ZMIENNE
+
     @Override
     public void exitNewVar(GrammarParser.NewVarContext ctx) {
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
+        ID = global ? "@" + ID : "%" + ID;
         String type = ctx.type().getText(); // pobierz typ zmiennej
-        if (!variables.containsKey(ID)) { // jeśli nie ma takiej zmiennej
-            variables.put(ID, type); // dodaj ją do listy
-            if (type.equals("int")) {
-                LLVMGenerator.declare_i32(ID); // zadeklaruj int
-            } else if (type.equals("float")) {
-                LLVMGenerator.declare_double(ID); // zadeklaruj float
+
+        if(global) { // jesteśmy globalnie
+            if (!variables.containsKey(ID)) { // jeśli nie ma takiej zmiennej globalnie
+                variables.put(ID, type); // dodaj ją do listy
+                if (type.equals("int")) {
+                    LLVMGenerator.declare_global_i32(ID); // zadeklaruj int
+                } else if (type.equals("float")) {
+                    LLVMGenerator.declare_global_double(ID); // zadeklaruj float
+                }
+            } else { // taka zmienna już istnieje
+                error(ctx.getStart().getLine(), "Variable " + ID + " already declared");
             }
-        } else { // taka zmienna już istnieje
-            error(ctx.getStart().getLine(), "Variable " + ID + " already declared");
+        } else {
+            if (!variables.containsKey(ID) && !localVariables.containsKey(ID)) { // nazwa nie jest zajęta globalnie i lokalnie
+                localVariables.put(ID, type);
+                if (type.equals("int")) {
+                    LLVMGenerator.declare_i32(ID); // zadeklaruj int
+                } else if (type.equals("float")) {
+                    LLVMGenerator.declare_double(ID); // zadeklaruj float
+                }
+            } else { // nazwa zajęta
+                error(ctx.getStart().getLine(), "Variable " + ID + " already declared");
+            }
         }
+
+
     }
 
     @Override
     public void exitVar(GrammarParser.VarContext ctx) {
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
-        if (!variables.containsKey(ID)) {
-            error(ctx.getStart().getLine(), "Unknown variable " + ID);
+        ID = global ? "@" + ID : "%" + ID;
+        if (!variables.containsKey(ID)) { // nie ma takiej zmiennej globalnej
+            if (!global && !localVariables.containsKey(ID)) { // nie ma takiej zmiennej lokalnej
+                error(ctx.getStart().getLine(), "Unknown variable " + ID);
+            }
         }
     }
 
@@ -352,6 +488,39 @@ public class LLVMActions extends GrammarBaseListener {
             LLVMGenerator.declare_string(ID, value.length());
         } else {
             error(ctx.getStart().getLine(), "Variable " + ID + " already declared");
+        }
+    }
+
+    @Override
+    public void exitAssign(GrammarParser.AssignContext ctx) {
+        String ID = ctx.id().children.get(ctx.id().children.size() - 1).toString(); // pobierz nazwę zmiennej
+        ID = global ? "@" + ID : "%" + ID;
+        Value value = stack.pop(); // pobierz wartość ze stosu
+        // to czy zmienna istnieje jest sprawdzane w exitVar
+        if(variables.containsKey(ID)) {
+            if (variables.get(ID).equals(value.type)) {
+                variables.put(ID, value.type); // dodaj zmienną i wartość do listy
+                if (value.type.equals("int")) {
+                    LLVMGenerator.assign_i32(ID, value.name);
+                } else if (value.type.equals("float")) {
+                    LLVMGenerator.assign_double(ID, value.name);
+                }
+            } else {
+                error(ctx.getStart().getLine(), "Assign type mismatch");
+            }
+        } else if (!global) { // zmienna nie jest globalna, a my jesteśmy w funkcji
+            if (localVariables.get(ID).equals(value.type)) {
+                localVariables.put(ID, value.type); // dodaj zmienną i wartość do listy
+                if (value.type.equals("int")) {
+                    LLVMGenerator.assign_i32(ID, value.name);
+                } else if (value.type.equals("float")) {
+                    LLVMGenerator.assign_double(ID, value.name);
+                }
+            } else {
+                error(ctx.getStart().getLine(), "Assign type mismatch");
+            }
+        } else { // tutaj chyba nigdy nie wejdziemy, bo localVariables są zawsze dla konkretnej funkcji?
+            error(ctx.getStart().getLine(), "Unknown variable " + ID);
         }
     }
 }

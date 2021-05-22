@@ -1,14 +1,19 @@
-int a
-print "Podaj int a"
-read a
+int i = 1
 
-int b
-print "Podaj int b"
-read b
-
-if a == 2 {
-    print a
-    if b == 2 {
-        print b
-    }
+repeat 3 {
+    print i
+    i = i + 1
 }
+
+if i == 4 {
+    print "CZTERY"
+}
+
+def wypisz {
+    print "Write something"
+    int j = i + 2
+    print i
+    print j
+}
+
+wypisz()

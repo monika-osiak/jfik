@@ -87,6 +87,18 @@ public interface GrammarListener extends ParseTreeListener {
 	 */
 	void exitIf(GrammarParser.IfContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code call}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void enterCall(GrammarParser.CallContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code call}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void exitCall(GrammarParser.CallContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code statId}
 	 * labeled alternative in {@link GrammarParser#stat}.
 	 * @param ctx the parse tree
@@ -134,6 +146,16 @@ public interface GrammarListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNewArray(GrammarParser.NewArrayContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link GrammarParser#function}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunction(GrammarParser.FunctionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GrammarParser#function}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunction(GrammarParser.FunctionContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code numb}
 	 * labeled alternative in {@link GrammarParser#val}.
@@ -340,4 +362,24 @@ public interface GrammarListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitEqual(GrammarParser.EqualContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link GrammarParser#name}.
+	 * @param ctx the parse tree
+	 */
+	void enterName(GrammarParser.NameContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GrammarParser#name}.
+	 * @param ctx the parse tree
+	 */
+	void exitName(GrammarParser.NameContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link GrammarParser#fblock}.
+	 * @param ctx the parse tree
+	 */
+	void enterFblock(GrammarParser.FblockContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link GrammarParser#fblock}.
+	 * @param ctx the parse tree
+	 */
+	void exitFblock(GrammarParser.FblockContext ctx);
 }

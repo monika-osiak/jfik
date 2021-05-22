@@ -2,7 +2,7 @@ grammar Grammar;
 
 program: block;
 
-block: ( stat? NEWLINE )*;
+block: ( (stat|function)? NEWLINE )*;
 
 stat: PRINT ID                              #print
     | READ ID                               #read
@@ -10,11 +10,14 @@ stat: PRINT ID                              #print
     | REPEAT repetitions '{' block '}'      #repeat
     | IF equal '{' blockif  '}'             #if
     // TODO: dodać if - else if - else
+    | ID '()'                               #call
     | id                                    #statId
     | id EQ val                             #assign
     | id EQ expr                            #assign
     | 'string' ID EQ STRING                 #newString
     | arrayType ID EQ '[' (number)* ']'     #newArray;
+
+function: FUNCTION name '{' fblock '}';
 
 val: number                                 #numb
     | ID '[' INT ']'                        #arrElem
@@ -46,6 +49,12 @@ blockif: block;
 
 equal: ID '==' INT;
 // TODO: porównanie do czegokolwiek innego niż int???
+
+name: ID;
+
+fblock: ( stat? NEWLINE )*;
+
+FUNCTION: 'def';
 
 REPEAT: 'repeat';
 
