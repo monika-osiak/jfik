@@ -15,7 +15,9 @@ stat: PRINT ID                              #print
     | id EQ val                             #assign
     | id EQ expr                            #assign
     | 'string' ID EQ STRING                 #newString
-    | arrayType ID EQ '[' (number)* ']'     #newArray;
+    | arrayType ID EQ '[' (number)* ']'     #newArray
+    | ID ID EQ ID '(' (val)* ')'            #newStruct
+    | ID '{' NEWLINE (type ID NEWLINE)* '}' #defStruct;
 
 function: FUNCTION name '{' fblock '}';
 
@@ -54,6 +56,8 @@ name: ID;
 
 fblock: ( stat? NEWLINE )*;
 
+STRUCT: 'struct';
+
 FUNCTION: 'def';
 
 REPEAT: 'repeat';
@@ -82,7 +86,7 @@ FLOAT: '-'?'0'..'9'+'.''0'..'9'+;
 
 INT: '-'?'0'..'9'+;
 
-ID: ('a'..'z'|'A'..'Z'|'0'..'9')+;
+ID: ('a'..'z'|'A'..'Z'|'0'..'9'|'.')+;
 
 STRING: '"'[a-zA-Z ]+'"';
 

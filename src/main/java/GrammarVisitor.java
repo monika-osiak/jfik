@@ -92,6 +92,20 @@ public interface GrammarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNewArray(GrammarParser.NewArrayContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code newStruct}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNewStruct(GrammarParser.NewStructContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code defStruct}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDefStruct(GrammarParser.DefStructContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link GrammarParser#function}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

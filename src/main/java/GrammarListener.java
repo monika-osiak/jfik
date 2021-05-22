@@ -147,6 +147,30 @@ public interface GrammarListener extends ParseTreeListener {
 	 */
 	void exitNewArray(GrammarParser.NewArrayContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code newStruct}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void enterNewStruct(GrammarParser.NewStructContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code newStruct}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void exitNewStruct(GrammarParser.NewStructContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code defStruct}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void enterDefStruct(GrammarParser.DefStructContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code defStruct}
+	 * labeled alternative in {@link GrammarParser#stat}.
+	 * @param ctx the parse tree
+	 */
+	void exitDefStruct(GrammarParser.DefStructContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link GrammarParser#function}.
 	 * @param ctx the parse tree
 	 */
