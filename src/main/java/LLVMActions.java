@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Stack;
+import java.util.*;
 
 class Value {
     public String name;
@@ -23,11 +20,27 @@ class Array {
     }
 }
 
+class Struct {
+    public String name; // nazwa struktury
+    public HashMap<String, String> data; // nazwa pola i typ; x -> int, y -> int etc
+    public List kolejnosc;
+
+    public Struct(String name, HashMap data, List k) {
+        this.name = name;
+        this.data = data;
+        this.kolejnosc = k;
+    }
+}
+
 public class LLVMActions extends GrammarBaseListener {
     HashMap<String, String> variables = new HashMap<String, String>(); // wszystkie zmienne: ID -> typ zmiennej
     HashMap<String, String> localVariables = new HashMap<String, String>(); // wszystkie zmienne: ID -> typ zmiennej
     // variables zawiera consts
     HashMap<String, Array> consts = new HashMap<String, Array>(); // wszystkie stałe: ID -> array
+
+    HashMap<String, Struct> defStruct = new HashMap<>(); // wszystkie zdefiniowane do tej pory struktury
+    HashMap<String, String> structures = new HashMap<>(); // nazwa zmiennej -> typ struktury
+
     Stack<Value> stack = new Stack<Value>();
     int undeclaredStrings = 0;
 
@@ -48,6 +61,76 @@ public class LLVMActions extends GrammarBaseListener {
     public void error(int line, String msg) {
         System.err.println("Error, line " + line + ", " + msg);
         System.exit(1);
+    }
+
+    // STRUKTURY
+    @Override
+    public void exitDefStruct(GrammarParser.DefStructContext ctx) {
+        String name = ctx.ID(0).getText();
+        if(!variables.containsKey(name)) {
+            HashMap<String, String> data = new HashMap<>();
+            for (int i = 1; i < ctx.ID().size(); i++) {
+                String type = ctx.type(i-1).getText();
+                String ID = ctx.ID(i).getText();
+                if(!data.containsKey(ID)) {
+                    data.put(ID, type);
+                } else {
+                    error(ctx.getStart().getLine(), "Name " + ID + " already declared");
+                }
+            }
+            List k = ctx.ID().subList(1,ctx.ID().size());
+            Struct newStruct = new Struct(name, data, k);
+            defStruct.put(name, newStruct);
+            variables.put(name, "struct");
+        } else {
+            error(ctx.getStart().getLine(), "Name " + name + " already declared");
+        }
+
+    }
+
+    @Override
+    public void exitNewStruct(GrammarParser.NewStructContext ctx) {
+        // Point p = Point(1 2)
+        String type = ctx.ID(0).getText(); // Point
+        String ID = ctx.ID(1).getText(); // p
+        String struct = ctx.ID(2).getText(); // Point
+        int args = ctx.val().size();
+
+        if(!type.equals(struct)) {
+            error(ctx.getStart().getLine(), "Mismatch structure type");
+        }
+
+        if(defStruct.containsKey(type)) { // jest taka struktura
+            Struct s = defStruct.get(type);
+            if(args != s.data.size()) {
+                error(ctx.getStart().getLine(), "Expected " + s.data.size() + " arguments");
+            }
+            if(variables.containsKey(ID)) {
+                error(ctx.getStart().getLine(), "Name " + ID + " already declared");
+            }
+            variables.put(ID, "struct");
+            structures.put(ID, type);
+            for (int i = 0; i < args; i++) {
+                String var = s.kolejnosc.get(i).toString();
+                String val = ctx.val(i).getText();
+                String t = s.data.get(var);
+                String name = "@" + ID + var;
+                if (!variables.containsKey(name)) {
+                    variables.put(name, t); // dodaj ją do listy
+                    if (t.equals("int")) {
+                        LLVMGenerator.declare_global_i32(name); // zadeklaruj int
+                        LLVMGenerator.assign_i32(name, val);
+                    } else if (t.equals("float")) {
+                        LLVMGenerator.declare_global_double(name); // zadeklaruj float
+                        LLVMGenerator.assign_double(name, val);
+                    }
+                } else { // taka zmienna już istnieje
+                    error(ctx.getStart().getLine(), "Variable " + name + " already declared");
+                }
+            }
+        } else {
+            error(ctx.getStart().getLine(), "Unknown structure  " + type);
+        }
     }
 
     // METODY OGÓLNE
@@ -206,6 +289,18 @@ public class LLVMActions extends GrammarBaseListener {
                 LLVMGenerator.printf_double(ID);
             } else if (type.equals("string")) { // wypisz string
                 LLVMGenerator.printf_string(ID, consts.get(ID).values.get(0).length());
+            } else if (type.equals("struct")) { // wypisz strukturę
+                Struct s = defStruct.get(structures.get(ID));
+                for (int i = 0; i < s.kolejnosc.size(); i++) {
+                    String s_ID = s.kolejnosc.get(i).toString();
+                    String s_type = s.data.get(s_ID);
+                    String name = "@" + ID + s_ID;
+                    if(s_type.equals("int")) {
+                        LLVMGenerator.printf_i32(name);
+                    } else if (s_type.equals("float")) {
+                        LLVMGenerator.printf_double(name);
+                    }
+                }
             }
         } else { // nie ma takiej zmiennej
             error(ctx.getStart().getLine(), "Unknown variable " + ID);
@@ -242,38 +337,6 @@ public class LLVMActions extends GrammarBaseListener {
 
     @Override
     public void exitValId(GrammarParser.ValIdContext ctx) {
-        /*
-        String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
-        String newID = "@"+ID;
-        String type = variables.get(newID);
-        if(type == null && !global) { // nie ma takiej zmiennej globalnej
-            newID = "%"+ID;
-            type = localVariables.get(newID); // pobierz zmienną lokalną
-        }
-        ID = newID;
-        if (type == null) { // złap string, który nie ma w ID ani @ ani %
-            ID = ctx.ID().getText();
-            type = variables.get(ID);
-        }
-        if (type != null) {
-            if (type.equals("int")) { // wypisz int
-                LLVMGenerator.printf_i32(ID);
-            } else if (type.equals("float")) { // wypisz float
-                LLVMGenerator.printf_double(ID);
-            } else if (type.equals("string")) { // wypisz string
-                LLVMGenerator.printf_string(ID, consts.get(ID).values.get(0).length());
-            }
-        } else { // nie ma takiej zmiennej
-            error(ctx.getStart().getLine(), "Unknown variable " + ID);
-        }
-         */
-
-        /*
-        String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
-        ID = global ? "@" + ID : "%" + ID;
-        String type = global ? variables.get(ID) : localVariables.get(ID); // pobierz typ zmiennej
-
-         */
         String ID = ctx.ID().getText(); // pobierz nazwę zmiennej
         String newID = "@"+ID;
         String type = variables.get(newID);
